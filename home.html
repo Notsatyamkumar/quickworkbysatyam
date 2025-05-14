@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickWork - Find Jobs Near You</title>
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-container">
+        <div class="logo">QuickWork</div>
+        <a href="postjob.html" id="post-job" class="btn btn-primary">Post a Job</a>
+        <label class="switch">
+          <input type="checkbox" id="theme-toggle" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </header>
+
+    <div class="container">
+      <h1 class="text-center">Available Jobs</h1>
+      <div id="jobs-list" class="job-list"></div>
+    </div>
+
+    <nav class="navbar">
+      <div class="container">
+        <ul>
+          <li><a href="home.html" class="nav-link active"><i data-lucide="home" class="icon"></i><span class="label">Home</span></a></li>
+          <li><a href="myjobs.html" class="nav-link"><i data-lucide="briefcase" class="icon"></i><span class="label">My Jobs</span></a></li>
+          <li><a href="messages.html" class="nav-link"><i data-lucide="message-square" class="icon"></i><span class="label">Messages</span></a></li>
+          <li><a href="notifications.html" class="nav-link"><i data-lucide="bell" class="icon"></i><span class="label">Alerts</span></a></li>
+          <li><a href="settings.html" class="nav-link"><i data-lucide="settings" class="icon"></i><span class="label">Settings</span></a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      checkAuth();
+      handleTheme();
+    });
+
+    function checkAuth() {
+      const user = localStorage.getItem('currentUser');
+      if (!user) {
+        window.location.href = 'index.html';
+      } else {
+        showJobsPage();
+        if (localStorage.getItem('newJobPosted') === 'true') {
+          alert('Job posted successfully!');
+          localStorage.removeItem('newJobPosted');
+        }
+      }
+    }
+
+    function showJobsPage() {
+      const jobsList = document.getElementById('jobs-list');
+      const jobs = JSON.parse(localStorage.getItem('jobs')) || [];
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+      if (jobs.length === 0) {
+        jobsList.innerHTML = '<p>No jobs posted yet.</p>';
+        return;
+      }
+
+      jobsList.innerHTML = jobs.map((job, index) => {
+        const isMyJob = job.employer === currentUser?.firstName;
+        const isApplied = isJobApplied(job.id);
+
+        return `
+          <div class="job-card card">
+            <div class="job-card-content">
+              <div class="job-card-header">
+                <h3 class="job-card-title">${job.title}</h3>
+                <div class="job-card-pay">₹${job.pay}</div>
+              </div>
+              <div class="job-card-location">
+                <i data-lucide="map-pin" class="icon"></i>
+                ${job.location}
+              </div>
+              <p class="job-card-description">${job.description}</p>
+              <div class="job-card-footer">
+                <div class="employer-info">
+                  <div class="employer-name">${job.employer}</div>
+                  <div class="job-posted">${job.hours} hours ago</div>
+                </div>
+                <div>
+                  ${!isMyJob && !isApplied ? 
+                    `<button class="btn btn-primary" onclick="applyForJob(${job.id})">Apply</button>` : 
+                    isApplied ? 
+                    `<button class="btn btn-secondary" onclick="cancelRequest(${job.id})">Cancel Request</button>` :
+                    `<p>You posted this job. You cannot apply.</p>`
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      lucide.createIcons();
+    }
+
+    function isJobApplied(jobId) {
+      const appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
+      return appliedJobs.some(job => job.id === jobId);
+    }
+
+    function applyForJob(jobId) {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      const jobs = JSON.parse(localStorage.getItem('jobs')) || [];
+      const appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
+
+      const jobToApply = jobs.find(job => job.id === jobId);
+      if (jobToApply && jobToApply.employer !== currentUser.firstName) {
+        appliedJobs.push({ ...jobToApply, applicant: currentUser.firstName });
+        localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
+        alert('Job application submitted successfully!');
+        showJobsPage();
+      } else {
+        alert("You cannot apply to a job you posted.");
+      }
+    }
+
+    function cancelRequest(jobId) {
+      let appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
+      appliedJobs = appliedJobs.filter(job => job.id !== jobId);
+      localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
+      showJobsPage();
+    }
+
+    function handleTheme() {
+      const toggle = document.getElementById('theme-toggle');
+      const savedMode = localStorage.getItem('theme') || 'light';
+      if (savedMode === 'dark') {
+        document.body.classList.add('dark-mode');
+        toggle.checked = true;
+      } else {
+        document.body.classList.add('light-mode');
+      }
+
+      toggle.addEventListener('change', () => {
+        if (toggle.checked) {
+          document.body.classList.replace('light-mode', 'dark-mode');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          document.body.classList.replace('dark-mode', 'light-mode');
+          localStorage.setItem('theme', 'light');
+        }
+      });
+    }
+    let applications = JSON.parse(localStorage.getItem('applications') || '[]');
+    applications.push({
+      jobId,
+      seekerId,
+      posterId,
+      status: 'pending',
+      timestamp: Date.now()
+    });
+    localStorage.setItem('applications', JSON.stringify(applications));
+
+  </script>
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-analytics.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAplEsMkwRDjUepKTOIllq3iibmqiT0u4Y",
+      authDomain: "quickwork-ca23c.firebaseapp.com",
+      projectId: "quickwork-ca23c",
+      storageBucket: "quickwork-ca23c.appspot.com",
+      messagingSenderId: "278427414311",
+      appId: "1:278427414311:web:d27998800343726339c302",
+      measurementId: "G-EM1DJPCEKE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+  </script>
+</body>
+</html>

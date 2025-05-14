@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Messages - QuickWork</title>
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-container">
+        <div class="logo">QuickWork</div>
+        <label class="switch">
+          <input type="checkbox" id="theme-toggle" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </header>
+
+    <div class="container">
+      <h1>Notifications</h1>
+      <div class="notifications-list">
+        <div class="empty-state">
+          <i data-lucide="bell" class="empty-state-icon"></i>
+          <h3>No Notifications</h3>
+          <p>Your notifications will appear here</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="navbar">
+      <div class="container">
+        <ul>
+          <li><a href="home.html" class="nav-link"><i data-lucide="home" class="icon"></i><span class="label">Home</span></a></li>
+          <li><a href="myjobs.html" class="nav-link"><i data-lucide="briefcase" class="icon"></i><span class="label">My Jobs</span></a></li>
+          <li><a href="messages.html" class="nav-link active"><i data-lucide="message-square" class="icon"></i><span class="label">Messages</span></a></li>
+          <li><a href="notifications.html" class="nav-link"><i data-lucide="bell" class="icon"></i><span class="label">Alerts</span></a></li>
+          <li><a href="settings.html" class="nav-link"><i data-lucide="settings" class="icon"></i><span class="label">Settings</span></a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    function handleTheme() {
+      const toggle = document.getElementById('theme-toggle');
+      const savedMode = localStorage.getItem('theme') || 'light';
+      if (savedMode === 'dark') {
+        document.body.classList.add('dark-mode');
+        toggle.checked = true;
+      } else {
+        document.body.classList.add('light-mode');
+      }
+
+      toggle.addEventListener('change', () => {
+        if (toggle.checked) {
+          document.body.classList.replace('light-mode', 'dark-mode');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          document.body.classList.replace('dark-mode', 'light-mode');
+          localStorage.setItem('theme', 'light');
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      handleTheme();
+    });
+  </script>
+
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-analytics.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAplEsMkwRDjUepKTOIllq3iibmqiT0u4Y",
+      authDomain: "quickwork-ca23c.firebaseapp.com",
+      projectId: "quickwork-ca23c",
+      storageBucket: "quickwork-ca23c.appspot.com",
+      messagingSenderId: "278427414311",
+      appId: "1:278427414311:web:d27998800343726339c302",
+      measurementId: "G-EM1DJPCEKE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    async function loadNotifications(userId) {
+      const notificationsRef = collection(db, 'notifications');
+      const q = query(notificationsRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        console.log(doc.id, " => ", doc.data());
+        // Display the notification in the UI
+      });
+    }
+
+    loadNotifications('userId');
+  </script>
+</body>
+</html>
